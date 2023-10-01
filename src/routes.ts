@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { BoardRouter } from "./board";
-import { UserRouter } from "./user";
+import { BoardRouter } from "./routes/board";
+import { UserRouter } from "./routes/user";
 
 const router = Router();
 

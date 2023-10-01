@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { decode, sign, verify } from "jsonwebtoken";
-import { getToken, hashPass, verifyPass } from "../auth";
-import { UserModel } from "../model/user";
+import { getToken, hashPass, verifyPass } from "../../auth";
+import { UserModel } from "../../model/user";
 
 export class UserController {
   create = async (req: Request, res: Response) => {

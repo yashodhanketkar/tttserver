@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Board from "tictactoe-board";
-import { BoardModel } from "../model/board";
-import { UserModel } from "../model/user";
+import { BoardModel } from "../../model/board";
+import { UserModel } from "../../model/user";
 
 const boardStatus = (board: Board) => {
   return {
