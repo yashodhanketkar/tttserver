@@ -24,7 +24,7 @@ const addDraw = async (player: unknown) =>
   await UserModel.findByIdAndUpdate(player, { $inc: { draw: 1, played: 1 } });
 
 export class BoardController {
-  newStart = async (req: Request, res: Response) => {
+  start = async (req: Request, res: Response) => {
     const board = new Board();
     const key = Math.random().toString(36).substring(2, 7);
     return res.status(201).json(
@@ -36,7 +36,7 @@ export class BoardController {
     );
   };
 
-  coldStart = async (req: Request, res: Response) => {
+  join = async (req: Request, res: Response) => {
     const id = req.params.id;
     const { key } = req.body;
     const dbBoard = await BoardModel.findById(id);
@@ -71,7 +71,7 @@ export class BoardController {
     return res.json(boards);
   };
 
-  status = async (req: Request, res: Response) => {
+  getByID = async (req: Request, res: Response) => {
     try {
       const dbBoard = await BoardModel.findById(req.params.id)
         .populate("against", "username")
@@ -170,7 +170,7 @@ export class BoardController {
     return res.status(200).json([...boards]);
   };
 
-  getMy = async (req: Request, res: Response) => {
+  my = async (req: Request, res: Response) => {
     const userID = req.body.user._id;
     const boards = await BoardModel.find({
       $or: [{ against: userID }, { startedBy: userID }],

@@ -5,7 +5,7 @@ import { BoardModel } from "../../model/board";
 import { UserModel } from "../../model/user";
 
 export class UserController {
-  create = async (req: Request, res: Response) => {
+  register = async (req: Request, res: Response) => {
     try {
       const user = await UserModel.create({
         ...req.body,
@@ -42,7 +42,7 @@ export class UserController {
     return res.json({ id: user._id, username: user.username });
   };
 
-  status = async (req: Request, res: Response) => {
+  statsByID = async (req: Request, res: Response) => {
     const { id } = req.params;
     const user = await UserModel.findById(id);
     if (!user) return res.status(404).end();
@@ -74,7 +74,7 @@ export class UserController {
     });
   };
 
-  statsAll = async (_req: Request, res: Response) => {
+  stats = async (_req: Request, res: Response) => {
     try {
       const users = (await UserModel.find()).map((user) => {
         const winRate = parseFloat((user.win / user.played).toFixed(2));
