@@ -1,5 +1,5 @@
 import cors from "cors";
-import express, { Request, Response } from "express";
+import express from "express";
 import expressWs from "express-ws";
 import morgan from "morgan";
 import { mongoConnection } from "./db";
@@ -17,11 +17,10 @@ app.use(morgan("dev"));
 mongoConnection();
 
 appWS.ws("/", (ws: any) => {
-  ws.on("message", (msg: string, req: Request, res: Response) => {
-    console.log(msg);
+  ws.on("message", (msg: string) => {
     const wsClients = wsInstance.getWss().clients;
     wsClients.forEach((client) => {
-      client.send("Hello");
+      client.send(`Got ${msg}`);
     });
   });
 });

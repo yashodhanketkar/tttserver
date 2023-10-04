@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
-  "homepage": ".",
   "scripts": {
     "dev": "concurrently \"tsc --watch\" \"nodemon -q dist/server.js\"",
     "build": "tsc",

@@ -100,8 +100,6 @@ export class BoardController {
     }
 
     const mark = board.currentMark();
-    console.log(mark);
-    console.log(req.body.user._id);
 
     if (
       (mark === "X" && String(dbBoard.startedBy) !== req.body.user._id) ||

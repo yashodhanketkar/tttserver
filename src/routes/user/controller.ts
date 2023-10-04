@@ -21,7 +21,6 @@ export class UserController {
 
   login = async (req: Request, res: Response) => {
     try {
-      console.log(req);
       const user = await UserModel.findOne({ username: req.body.username });
       if (!user)
         return res.status(401).json({ message: "Invalid credentials" }).end();
@@ -95,7 +94,7 @@ export class UserController {
       });
       return res.status(200).json(users);
     } catch (err) {
-      console.log((err as Error).message);
+      console.log(err);
       return res.status(500).end();
     }
   };
