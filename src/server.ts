@@ -1,7 +1,13 @@
 import express, { Request, Response } from "express";
-import { mongoConnection } from "./config/db";
-import { HOST, PORT, appWS, configApp, wsInstance } from "./config/initial";
-import { MainRouter } from "./routes";
+import {
+  HOST,
+  MainRouter,
+  PORT,
+  appWS,
+  configApp,
+  mongoConnection,
+  wsInstance,
+} from "./config";
 
 // exporting from here for ease of access
 export { wsInstance };

@@ -1,9 +1,7 @@
 import { Router } from "express";
-import { BoardRouter } from "./routes/board";
-import { UserRouter } from "./routes/user";
+import { BoardRouter, UserRouter } from "../routes";
 
 const router = Router();
-const socketRouter = Router();
 
 router.use("/board", BoardRouter);
 router.use("/user", UserRouter);
