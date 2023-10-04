@@ -8,6 +8,7 @@ const userController = new UserController();
 router.post("/register", userController.create);
 router.post("/login", userController.login);
 router.get("/me", [Auth], userController.me);
-router.get("/:id", userController.status);
+router.get("/stats", userController.statsAll);
+router.get("/stats/:id", userController.status);
 
 export { router as UserRouter };

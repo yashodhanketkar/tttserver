@@ -1,6 +1,20 @@
 import { model, Schema } from "mongoose";
 
-const BoardSchema = new Schema(
+export type TBoard = {
+  _id: Schema.Types.ObjectId;
+  startedBy: Schema.Types.ObjectId;
+  against: Schema.Types.ObjectId;
+  numberOfPlayers: Number;
+  key: string;
+  grid: string[];
+  currentMark: string;
+  isGameOver: boolean;
+  isDraw: boolean;
+  hasWinner: boolean;
+  winner: Schema.Types.ObjectId;
+};
+
+const BoardSchema = new Schema<TBoard>(
   {
     startedBy: {
       type: Schema.Types.ObjectId,
@@ -25,11 +39,18 @@ const BoardSchema = new Schema(
     currentMark: {
       type: String,
     },
+    isGameOver: {
+      type: Boolean,
+    },
     isDraw: {
       type: Boolean,
     },
     hasWinner: {
       type: Boolean,
+    },
+    winner: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   {
@@ -37,4 +58,4 @@ const BoardSchema = new Schema(
   }
 );
 
-export const BoardModel = model("Board", BoardSchema);
+export const BoardModel = model<TBoard>("Board", BoardSchema);

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Board from "tictactoe-board";
-import { BoardModel } from "../../model/board";
+import { WebScoketHelper } from "../../helpers/ws";
+import { BoardModel, TBoard } from "../../model/board";
 import { UserModel } from "../../model/user";
 
 const boardStatus = (board: Board) => {
@@ -9,6 +10,7 @@ const boardStatus = (board: Board) => {
     currentMark: board.currentMark(),
     isDraw: board.isGameDraw(),
     hasWinner: board.hasWinner(),
+    isGameOver: board.isGameOver(),
   };
 };
 
@@ -25,13 +27,13 @@ export class BoardController {
   newStart = async (req: Request, res: Response) => {
     const board = new Board();
     const key = Math.random().toString(36).substring(2, 7);
-    return res.status(201).json({
-      status: await BoardModel.create({
+    return res.status(201).json(
+      await BoardModel.create({
         ...boardStatus(board),
         startedBy: req.body.user._id,
         key,
-      }),
-    });
+      })
+    );
   };
 
   coldStart = async (req: Request, res: Response) => {
@@ -41,12 +43,21 @@ export class BoardController {
     if (!dbBoard)
       return res.status(404).json({ message: "Incorrect board number" }).end();
     if (key !== dbBoard.key) return res.status(500).end();
-    if (dbBoard.startedBy !== req.body.user._id && !dbBoard.against)
+    if (dbBoard.startedBy !== req.body.user._id && !dbBoard.against) {
       await BoardModel.findByIdAndUpdate(id, {
         $set: {
           against: req.body.user._id,
         },
+        $inc: {
+          numberOfPlayers: 1,
+        },
       });
+      await WebScoketHelper.sender(
+        JSON.stringify({
+          message: "Player two joined",
+        })
+      );
+    }
     const board = new Board(dbBoard.grid);
     return res.status(201).json({
       status: boardStatus(board),
@@ -65,10 +76,7 @@ export class BoardController {
       const dbBoard = await BoardModel.findById(req.params.id)
         .populate("against", "username")
         .populate("startedBy", "username");
-      if (dbBoard)
-        return res.status(200).json({
-          status: dbBoard,
-        });
+      if (dbBoard) return res.status(200).json(dbBoard);
       else return res.status(404).end();
     } catch (err) {
       console.log(err);
@@ -81,7 +89,6 @@ export class BoardController {
     const dbBoard = await BoardModel.findById(req.params.id);
     if (!dbBoard)
       return res.status(404).json({ message: "Board not found" }).end();
-    if (dbBoard.key !== req.body.key) return res.status(500).end();
     board = new Board(dbBoard.grid);
     const { index } = req.body;
 
@@ -117,10 +124,21 @@ export class BoardController {
       if (board.winningPlayer() === "X") {
         await addWin(dbBoard.startedBy);
         await addLoss(dbBoard.against);
+        await BoardModel.findByIdAndUpdate(dbBoard._id, {
+          $set: { winner: dbBoard.startedBy },
+        });
       } else {
         await addLoss(dbBoard.startedBy);
         await addWin(dbBoard.against);
+        await BoardModel.findByIdAndUpdate(dbBoard._id, {
+          $set: { winner: dbBoard.against },
+        });
       }
+      await WebScoketHelper.sender(
+        JSON.stringify({
+          status: boardStatus(board),
+        })
+      );
       return res
         .status(200)
         .json({ message: `Player ${board.winningPlayer()}` });
@@ -129,18 +147,29 @@ export class BoardController {
     if (board.isGameDraw()) {
       await addDraw(dbBoard.startedBy);
       await addDraw(dbBoard.against);
+      await WebScoketHelper.sender(
+        JSON.stringify({
+          status: boardStatus(board),
+        })
+      );
     }
 
-    return res.status(200).json({
-      status: boardStatus(board),
-    });
+    const status = boardStatus(board);
+    await WebScoketHelper.sender(
+      JSON.stringify({
+        _id: dbBoard._id,
+        grid: status.grid,
+      })
+    );
+    return res.status(200).json(status);
   };
 
   getAll = async (_req: Request, res: Response) => {
     const boards = await BoardModel.find()
       .populate("against", "username")
-      .populate("startedBy", "username");
-    return res.status(200).json({ boards });
+      .populate("startedBy", "username")
+      .populate("winner", "username");
+    return res.status(200).json([...boards]);
   };
 
   getMy = async (req: Request, res: Response) => {
