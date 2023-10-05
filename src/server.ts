@@ -1,17 +1,10 @@
 import express, { Request, Response } from "express";
-import {
-  HOST,
-  MainRouter,
-  PORT,
-  appWS,
-  configApp,
-  mongoConnection,
-  wsInstance,
-} from "./config";
+import expressWs from "express-ws";
+import { HOST, MainRouter, PORT, configApp, mongoConnection } from "./config";
 
-// exporting from here for ease of access
-export { wsInstance };
 export const app = express();
+export const { app: appWS } = expressWs(app);
+export const wsInstance = expressWs(appWS);
 
 // apply configs
 app.use(configApp);
