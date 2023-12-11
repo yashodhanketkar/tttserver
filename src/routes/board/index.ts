@@ -6,10 +6,10 @@ const router = Router();
 const boardController = new BoardController();
 
 // get routes
-router.get("/", boardController.getAll);
+router.get("/", [Auth], boardController.getAll);
 router.get("/my", [Auth], boardController.my);
 router.get("/new", [Auth], boardController.start);
-router.get("/:id", boardController.getByID);
+router.get("/:id", [Auth], boardController.getByID);
 
 // put routes
 router.put("/saved/:id", [Auth], boardController.join);

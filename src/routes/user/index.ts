@@ -7,8 +7,8 @@ const userController = new UserController();
 
 // get routes
 router.get("/me", [Auth], userController.me);
-router.get("/stats", userController.stats);
-router.get("/stats/:id", userController.statsByID);
+router.get("/stats", [Auth], userController.stats);
+router.get("/stats/:id", [Auth], userController.statsByID);
 
 // post routes
 router.post("/register", userController.register);
