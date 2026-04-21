@@ -1,8 +1,10 @@
-import { Request, Response } from "express";
+import { type Response } from "express";
+import { type AuthRequest } from "../middlewares/auth";
 import Board from "tictactoe-board";
-import { WebScoketHelper } from "../../helpers/ws";
-import { BoardModel, TBoard } from "../../model/board";
-import { UserModel } from "../../model/user";
+import { WebScoketHelper } from "../helpers/ws";
+import { BoardModel } from "../model/board";
+import { UserModel } from "../model/user";
+import { Types } from "mongoose";
 
 const boardStatus = (board: Board) => {
   return {
@@ -24,26 +26,28 @@ const addDraw = async (player: unknown) =>
   await UserModel.findByIdAndUpdate(player, { $inc: { draw: 1, played: 1 } });
 
 export class BoardController {
-  start = async (req: Request, res: Response) => {
-    const board = new Board();
+  start = async (req: AuthRequest, res: Response) => {
     const key = Math.random().toString(36).substring(2, 7);
-    return res.status(201).json(
-      await BoardModel.create({
-        ...boardStatus(board),
-        startedBy: req.body.user._id,
-        key,
-      })
-    );
+
+    const board = new Board();
+    const initialStatus = boardStatus(board);
+
+    const newBoard = await BoardModel.create({
+      ...initialStatus,
+      startedBy: new Types.ObjectId(req.userId),
+      key,
+    });
+    return res.status(201).json(newBoard);
   };
 
-  join = async (req: Request, res: Response) => {
-    const id = req.params.id;
+  join = async (req: AuthRequest, res: Response) => {
+    const id = new Types.ObjectId(req.userId);
     const { key } = req.body;
     const dbBoard = await BoardModel.findById(id);
     if (!dbBoard)
       return res.status(404).json({ message: "Incorrect board number" }).end();
     if (key !== dbBoard.key) return res.status(500).end();
-    if (dbBoard.startedBy !== req.body.user._id && !dbBoard.against) {
+    if (dbBoard.startedBy !== id && !dbBoard.against) {
       await BoardModel.findByIdAndUpdate(id, {
         $set: {
           against: req.body.user._id,
@@ -55,7 +59,7 @@ export class BoardController {
       await WebScoketHelper.sender(
         JSON.stringify({
           message: "Player two joined",
-        })
+        }),
       );
     }
     const board = new Board(dbBoard.grid);
@@ -64,16 +68,21 @@ export class BoardController {
     });
   };
 
-  myBoards = async (req: Request, res: Response) => {
-    const boards = (await BoardModel.find({ user: req.body.user }))
+  myBoards = async (req: AuthRequest, res: Response) => {
+    const id = new Types.ObjectId(req.userId);
+    const boards = (
+      await BoardModel.find({
+        $or: [{ against: id }, { startedBy: id }],
+      })
+    )
       .filter((ele) => ele.isDraw === false && ele.hasWinner === false)
       .map((ele) => ele._id);
     return res.json(boards);
   };
 
-  getByID = async (req: Request, res: Response) => {
+  getByID = async (req: AuthRequest, res: Response) => {
     try {
-      const dbBoard = await BoardModel.findById(req.params.id)
+      const dbBoard = await BoardModel.findById(req.userId)
         .populate("against", "username")
         .populate("startedBy", "username");
       if (dbBoard) return res.status(200).json(dbBoard);
@@ -84,9 +93,10 @@ export class BoardController {
     }
   };
 
-  move = async (req: Request, res: Response) => {
+  move = async (req: AuthRequest, res: Response) => {
     let board: Board;
-    const dbBoard = await BoardModel.findById(req.params.id);
+    const id = new Types.ObjectId(req.userId);
+    const dbBoard = await BoardModel.findById(id);
     if (!dbBoard)
       return res.status(404).json({ message: "Board not found" }).end();
     board = new Board(dbBoard.grid);
@@ -102,8 +112,8 @@ export class BoardController {
     const mark = board.currentMark();
 
     if (
-      (mark === "X" && String(dbBoard.startedBy) !== req.body.user._id) ||
-      (mark === "O" && String(dbBoard.against) !== req.body.user._id)
+      (mark === "X" && dbBoard.startedBy !== id) ||
+      (mark === "O" && dbBoard.against !== id)
     )
       return res
         .status(400)
@@ -135,7 +145,7 @@ export class BoardController {
       await WebScoketHelper.sender(
         JSON.stringify({
           status: boardStatus(board),
-        })
+        }),
       );
       return res
         .status(200)
@@ -148,7 +158,7 @@ export class BoardController {
       await WebScoketHelper.sender(
         JSON.stringify({
           status: boardStatus(board),
-        })
+        }),
       );
     }
 
@@ -157,12 +167,12 @@ export class BoardController {
       JSON.stringify({
         _id: dbBoard._id,
         grid: status.grid,
-      })
+      }),
     );
     return res.status(200).json(status);
   };
 
-  getAll = async (_req: Request, res: Response) => {
+  getAll = async (_req: AuthRequest, res: Response) => {
     const boards = await BoardModel.find()
       .populate("against", "username")
       .populate("startedBy", "username")
@@ -170,10 +180,10 @@ export class BoardController {
     return res.status(200).json([...boards]);
   };
 
-  my = async (req: Request, res: Response) => {
-    const userID = req.body.user._id;
+  my = async (req: AuthRequest, res: Response) => {
+    const id = new Types.ObjectId(req.userId);
     const boards = await BoardModel.find({
-      $or: [{ against: userID }, { startedBy: userID }],
+      $or: [{ against: id }, { startedBy: id }],
     });
     return res.status(200).json({ boards });
   };

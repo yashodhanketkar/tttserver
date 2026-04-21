@@ -1,6 +1,6 @@
 import { compare, genSalt, hash } from "bcrypt";
 import { config } from "dotenv";
-import { sign, verify } from "jsonwebtoken";
+import { sign } from "jsonwebtoken";
 
 config();
 const TOKEN = process.env.TOKEN;

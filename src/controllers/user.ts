@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { decode, sign, verify } from "jsonwebtoken";
-import { getToken, hashPass, verifyPass } from "../../auth";
-import { BoardModel } from "../../model/board";
-import { UserModel } from "../../model/user";
+import { getToken, hashPass, verifyPass } from "../auth";
+import { BoardModel } from "../model/board";
+import { UserModel } from "../model/user";
+import { type AuthRequest } from "../middlewares/auth";
 
 export class UserController {
   register = async (req: Request, res: Response) => {
@@ -36,14 +36,14 @@ export class UserController {
     }
   };
 
-  me = async (req: Request, res: Response) => {
-    const user = await UserModel.findById(req.body.user._id);
+  me = async (req: AuthRequest, res: Response) => {
+    const user = await UserModel.findById(req.userId);
     if (!user) return res.status(401).end();
     return res.json({ id: user._id, username: user.username });
   };
 
-  statsByID = async (req: Request, res: Response) => {
-    const { id } = req.params;
+  statsByID = async (req: AuthRequest, res: Response) => {
+    const id = req.userId;
     const user = await UserModel.findById(id);
     if (!user) return res.status(404).end();
     const winRate = user.win / user.played;
@@ -74,7 +74,7 @@ export class UserController {
     });
   };
 
-  stats = async (_req: Request, res: Response) => {
+  stats = async (_req: AuthRequest, res: Response) => {
     try {
       const users = (await UserModel.find()).map((user) => {
         const winRate = parseFloat((user.win / user.played).toFixed(2));

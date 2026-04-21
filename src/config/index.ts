@@ -9,7 +9,7 @@ config();
 const app = express();
 app.use(json());
 app.use(cors());
-app.use(morgan("combined"));
+app.use(morgan("dev"));
 
 // loading env variables with fallback values
 const DB_URI = process.env.DB_URI;
