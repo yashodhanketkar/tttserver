@@ -41,20 +41,20 @@ export class BoardController {
   };
 
   join = async (req: AuthRequest, res: Response) => {
-    const id = new Types.ObjectId(req.userId);
+    const id = new Types.ObjectId(req.params.id as string);
+    const userId = new Types.ObjectId(req.userId);
     const { key } = req.body;
     const dbBoard = await BoardModel.findById(id);
     if (!dbBoard)
       return res.status(404).json({ message: "Incorrect board number" }).end();
     if (key !== dbBoard.key) return res.status(500).end();
-    if (dbBoard.startedBy !== id && !dbBoard.against) {
+    if (
+      dbBoard.startedBy.toString() !== userId.toString() &&
+      !dbBoard.against
+    ) {
       await BoardModel.findByIdAndUpdate(id, {
-        $set: {
-          against: req.body.user._id,
-        },
-        $inc: {
-          numberOfPlayers: 1,
-        },
+        $set: { against: userId },
+        $inc: { numberOfPlayers: 1 },
       });
       await WebScoketHelper.sender(
         JSON.stringify({
@@ -82,13 +82,11 @@ export class BoardController {
 
   getByID = async (req: AuthRequest, res: Response) => {
     try {
-      const dbBoard = await BoardModel.findById(req.userId)
-        .populate("against", "username")
-        .populate("startedBy", "username");
+      const id = new Types.ObjectId(req.params.id as string);
+      const dbBoard = await BoardModel.findOne({ _id: id });
       if (dbBoard) return res.status(200).json(dbBoard);
       else return res.status(404).end();
     } catch (err) {
-      console.log(err);
       return res.status(500).end();
     }
   };
